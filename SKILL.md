@@ -66,9 +66,14 @@ those is only safe if you **state those properties in plain language at the defi
 it guarantees, why it can't be bypassed — so nothing is lost but the jargon. Done that way the
 plain description is usually *clearer* than the term, since it spells out the invariants instead
 of assuming the reader knows the literature. What you forfeit is only the literature handle (the
-word someone would grep or cite); judge whether that's worth keeping the charge, and if it is,
-the register loses that one — a term of art that genuinely must stay is a legitimate kept
-exception, noted in `REGISTER.md`.
+word someone would grep or cite).
+
+**Default to transforming.** Anything that can be reworded with its meaning intact *should* be —
+even a term of art, once its properties are stated plainly. Keep the charged word only when the
+meaning genuinely *cannot* survive without it. The reason is budget: the classifier fires on
+cumulative density, so every charged word kept out of caution or convenience spends from a shared
+pool that the one truly-irreducible term may need. Be greedy about transforming; hoard the kept
+exceptions for the words that truly cannot be transformed, and note each in `REGISTER.md`.
 
 Split the mapping by blast radius:
 - **Comments & docstrings** — free to change; zero behavior risk. Do these always.
