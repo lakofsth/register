@@ -56,7 +56,21 @@ better than what it replaced. Watch dual-use words especially — a word that na
 as readily as preventing it reads the same whatever your intent, and no framing makes the
 classifier context-aware — so a plain description of the mechanism beats it. Words that only
 name protecting, checking, or noticing carry no such ambiguity. When unsure a candidate is
-clean, prefer a plain verb of the real activity. Split the mapping by blast radius:
+clean, prefer a plain verb of the real activity.
+
+**Distinguish a charged metaphor from a precise term of art.** Most loaded words are metaphors
+(a reviewer that "challenges") and lose nothing when plainly reworded. But some are genuine
+terms of art — an established concept whose exact name (e.g. an access-mediation primitive from
+security architecture) carries defining properties the plain word does not. Renaming one of
+those is only safe if you **state those properties in plain language at the definition** — what
+it guarantees, why it can't be bypassed — so nothing is lost but the jargon. Done that way the
+plain description is usually *clearer* than the term, since it spells out the invariants instead
+of assuming the reader knows the literature. What you forfeit is only the literature handle (the
+word someone would grep or cite); judge whether that's worth keeping the charge, and if it is,
+the register loses that one — a term of art that genuinely must stay is a legitimate kept
+exception, noted in `REGISTER.md`.
+
+Split the mapping by blast radius:
 - **Comments & docstrings** — free to change; zero behavior risk. Do these always.
 - **Internal identifiers** (locals, private attrs, helper names) — mechanical rename; tests
   follow within the codebase.
