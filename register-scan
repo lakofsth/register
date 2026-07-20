@@ -1,0 +1,190 @@
+#!/usr/bin/env python3
+"""register-scan — surface where a codebase's vocabulary has drifted from its declared register.
+
+POSITIVE BY DESIGN. This tool carries no list of "loaded" or "bad" words — carrying one would be
+the very artifact the register capability exists to avoid (a concentrated off-register word-list
+is itself a classifier trigger, and it never generalizes). Instead it reads the project's OWN
+positive register (REGISTER.md → "Words we reach for") plus a generic English + programming
+stoplist, and reports the tokens that remain — frequent, spread across files, and NOT part of the
+register the project declared for itself. A human reads the heatmap and judges each cluster
+against REGISTER.md; the tool only points.
+
+Usage:
+    register-scan <path> [REGISTER.md] [--top N] [--min-files M]     # whole-tree scan
+    <file list> | register-scan --stdin [REGISTER.md] [--top N]      # 'new material' scan
+
+Whole-tree mode walks <path>. Stdin mode reads newline-delimited file paths and scans only
+those — the 'new material' metric, e.g. checking just what a change touched:
+    git diff --name-only HEAD~5 | register-scan --stdin REGISTER.md
+
+If REGISTER.md is omitted it is looked for at <path>/REGISTER.md (whole-tree) or ./REGISTER.md
+(stdin). With no register at all the scan still runs (stoplist only) but the drift signal will
+be noisier — establish the register first for a clean read.
+"""
+from __future__ import annotations
+
+import collections
+import os
+import re
+import sys
+
+CODE_EXT = {".py", ".js", ".ts", ".tsx", ".jsx", ".go", ".rs", ".c", ".h", ".cpp", ".hpp",
+            ".java", ".rb", ".sh", ".lua", ".md", ".txt", ".rst", ".toml", ".yaml", ".yml"}
+SKIP_DIR = {".git", "node_modules", "__pycache__", ".venv", "venv", "dist", "build",
+            ".pytest_cache", ".mypy_cache", "models", "assets"}
+MAX_BYTES = 2_000_000          # skip generated blobs (embed caches, score dumps) — vocab lives in source
+SKIP_NAME = re.compile(r"(cache|scores?|baseline|embed|graded|structured|validated)", re.I)
+
+# Generic lexical noise only — English function words + ubiquitous programming tokens. NOT a
+# domain or "sensitive" list; it exists so the drift signal isn't drowned by 'the', 'return',
+# 'self'. Keep it domain-neutral.
+STOP = set("""
+a an the this that these those and or but if then else for while do done of to in on at by with
+from into over under out up down off as is are was were be been being it its it's they them their
+we you your our i me my he she his her not no yes can will would should could may might must shall
+have has had get got set put use used using make made made new old more most less least than so
+such only also just even still yet own same each any all some none one two three first next last
+return returns returned yield break continue pass raise try except finally with as def class
+lambda import from none true false null nil void int str float bool list dict tuple map set list
+value values key keys item items index idx elem element node data text name names id ids type kind
+path file files dir line lines char chars size len length count num number arg args kwarg kwargs
+param params opt opts option options config conf cfg env var vars self cls obj object result
+results out output outputs in input inputs func function method call called calls run runs running
+test tests assert check checks add added append remove delete update updates read write writes
+open close start stop begin end init main print log logs logger debug info warn warning error
+errors fail failed failure ok true false none base default defaults now time date ts timestamp
+version note notes todo fixme xxx http https www com org net html json yaml
+""".split())
+
+TOKEN = re.compile(r"[A-Za-z][A-Za-z'\-]{2,}")
+CAMEL = re.compile(r"[a-z0-9]([A-Z])")
+
+
+def split_ident(tok: str) -> list[str]:
+    tok = tok.replace("-", "_")
+    tok = CAMEL.sub(lambda m: "_" + m.group(1), tok)
+    return [p for p in tok.lower().split("_") if len(p) > 2]
+
+
+def load_register_words(reg_path: str) -> set[str]:
+    words: set[str] = set()
+    try:
+        with open(reg_path, encoding="utf-8") as f:
+            text = f.read()
+    except OSError:
+        return words
+    m = re.search(r"##\s*Words we reach for\s*(.+?)(?:\n##|\Z)", text, re.S | re.I)
+    body = m.group(1) if m else text
+    for w in re.findall(r"[A-Za-z][A-Za-z'\-]+", body):
+        for p in split_ident(w):
+            words.add(p)
+    return words
+
+
+def _ingest(fp: str, rel: str, register: set[str], freq, spread) -> None:
+    if os.path.splitext(fp)[1].lower() not in CODE_EXT or SKIP_NAME.search(os.path.basename(fp)):
+        return
+    try:
+        if os.path.getsize(fp) > MAX_BYTES:
+            return
+        with open(fp, encoding="utf-8", errors="ignore") as f:
+            content = f.read()
+    except OSError:
+        return                          # missing (e.g. a deleted file in a diff) — skip silently
+    for raw in TOKEN.findall(content):
+        for part in split_ident(raw):
+            if part in STOP or part in register or part.isdigit():
+                continue
+            freq[part] += 1
+            spread[part].add(rel)
+
+
+def scan(root: str, register: set[str]):
+    """Whole-tree scan (walk root)."""
+    freq: collections.Counter = collections.Counter()
+    spread: dict[str, set[str]] = collections.defaultdict(set)
+    for dirpath, dirs, files in os.walk(root):
+        dirs[:] = [d for d in dirs if d not in SKIP_DIR and not d.startswith(".")]
+        for fn in files:
+            fp = os.path.join(dirpath, fn)
+            _ingest(fp, os.path.relpath(fp, root), register, freq, spread)
+    return freq, spread
+
+
+def scan_paths(paths, register):
+    """Scan an explicit list of files — the 'new material' metric: pipe changed files in, e.g.
+    `git diff --name-only HEAD~5 | register-scan --stdin REGISTER.md`. Density here on freshly
+    authored material is the LEADING signal that the register is holding (vs the lagging,
+    noisier misfire rate)."""
+    freq: collections.Counter = collections.Counter()
+    spread: dict[str, set[str]] = collections.defaultdict(set)
+    for p in paths:
+        p = p.strip()
+        if p:
+            _ingest(p, p, register, freq, spread)
+    return freq, spread
+
+
+def main() -> int:
+    BOOL_FLAGS = {"--stdin"}             # take no value — must not swallow the next positional
+    args, flags, i = [], {}, 1
+    argv = sys.argv
+    while i < len(argv):
+        a = argv[i]
+        if a.startswith("--"):
+            if "=" in a:
+                k, v = a.split("=", 1)
+                flags[k] = v
+            elif a in BOOL_FLAGS:
+                flags[a] = True
+            elif i + 1 < len(argv) and not argv[i + 1].startswith("--"):
+                flags[a] = argv[i + 1]      # space-separated: --top 25
+                i += 1
+            else:
+                flags[a] = True
+        else:
+            args.append(a)
+        i += 1
+    stdin_mode = "--stdin" in flags
+    if not args and not stdin_mode:
+        print(__doc__)
+        return 2
+    top = int(flags.get("--top", 40))
+    min_files = int(flags.get("--min-files", 1))
+
+    if stdin_mode:
+        # 'new material' metric: paths on stdin, register as the sole positional (or ./REGISTER.md)
+        reg_path = args[0] if args else os.path.join(os.getcwd(), "REGISTER.md")
+        where = "across changed files"
+    else:
+        root = args[0]
+        reg_path = args[1] if len(args) > 1 else os.path.join(root, "REGISTER.md")
+        where = f"in {root}"
+
+    register = load_register_words(reg_path)
+    if not register:
+        print(f"(no register at {reg_path} — running stoplist-only; drift signal will be noisier)\n")
+    freq, spread = scan_paths(sys.stdin, register) if stdin_mode else scan(root, register)
+
+    # Rank by frequency × file-spread — a word that is both common and everywhere has drifted
+    # furthest into the codebase's identity. Single-file locals rank low on their own.
+    ranked = sorted(
+        ((tok, n, len(spread[tok])) for tok, n in freq.items() if len(spread[tok]) >= min_files),
+        key=lambda t: (t[1] * t[2], t[1]), reverse=True)[:top]
+
+    if not ranked:
+        print("no off-register tokens above threshold — the material reads in-register.")
+        return 0
+    print(f"off-register vocabulary {where}")
+    print(f"(ranked by frequency × file-spread; judge each against {os.path.basename(reg_path)})\n")
+    print(f"{'token':<20}{'uses':>7}{'files':>7}   hotspots")
+    for tok, n, nf in ranked:
+        hot = sorted(spread[tok], key=lambda r: r)[:3]
+        print(f"{tok:<20}{n:>7}{nf:>7}   {', '.join(hot)}{' …' if nf > 3 else ''}")
+    print(f"\n{len(ranked)} clusters shown. These are candidates, not judgments — a word here may "
+          f"belong in your register; if so, add it to '{os.path.basename(reg_path)}'.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
