@@ -54,6 +54,8 @@ test tests assert check checks add added append remove delete update updates rea
 open close start stop begin end init main print log logs logger debug info warn warning error
 errors fail failed failure ok true false none base default defaults now time date ts timestamp
 version note notes todo fixme xxx http https www com org net html json yaml
+state status active step days when never environ content max join load per what tmp temp
+monkeypatch mock fixture pytest args kwargs setattr getattr hasattr repr
 """.split())
 
 TOKEN = re.compile(r"[A-Za-z][A-Za-z'\-]{2,}")
