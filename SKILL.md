@@ -127,6 +127,19 @@ trips the classifier), and it makes the model attend to the banned words ("don't
 elephant"). Always show the target language; never enumerate the words to avoid. This is the same
 "positive, never a blacklist" rule as the durable artifact, applied to the prompt.
 
+## Reading loaded content is itself delegated (all tiers)
+
+Step 4's rule — never pull the loaded corpus into the driving session — is not special to the
+rename sweep. It is the general posture for *reading* any content that plausibly carries
+off-register density: raw percept or episode dumps, feed captures, calibration sets, an unknown
+external corpus. Treat such content as untrusted-to-the-main-session by default, on every tier —
+Fable, Opus, and Sonnet all carry the classifier, and on Opus/Sonnet a trip rolls back
+invisibly, so the driver cannot tell it happened. Delegate the read to a sub-agent (Sonnet by
+default) that returns aggregates, verdicts, or paraphrase; the raw text never enters the
+driver's context. Listing the known offenders per project is worth doing, but the posture is the
+default for anything new or unclassified. The cost asymmetry is the whole argument: a classifier
+hit inside a delegated agent costs that one agent a retry; the same hit inline costs the session.
+
 ## Generalizing across projects
 The method is domain-agnostic; only `REGISTER.md` is per-project. A data project's register is
 the vocabulary of data and flow; an infra project's is hosts and services; the CA project's is a
