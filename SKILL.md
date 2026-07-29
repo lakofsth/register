@@ -3,7 +3,7 @@ name: register
 description: >
   Establish a project's positive naming register and bring its code into that register, so
   benign work stops reading as something it isn't to a vocabulary-sensitive classifier. Use
-  when a project keeps drawing false-positive downgrades on ordinary diction, when starting a
+  when a project keeps drawing classifier false positives on ordinary diction, when starting a
   new project that should be born in a clean register, or when the user asks to "re-gloss",
   "de-load the vocabulary", "establish a register", or "make this generic across projects".
 ---
@@ -86,8 +86,8 @@ Split the mapping by blast radius:
   replay/round-trip identity on any persisted store.
 
 ### 4. Execute content-blind, delegated
-Handling the loaded vocabulary in bulk is exactly what re-trips the classifier — and on
-Opus/Sonnet a trip rolls back invisibly, so the driving session cannot even detect it. So the
+Handling the loaded vocabulary in bulk is exactly what re-trips the classifier — and a
+trip may degrade the response invisibly, so the driving session cannot count on detecting it. So the
 driving session stays in the positive register and NEVER pulls the loaded corpus into its own
 context. Run the mechanical rename in a **delegated sub-agent** (or via stream-transform pipes,
 `sed … | sink`, so the old tokens never enter context). Hand the sub-agent the register and the
@@ -127,22 +127,22 @@ trips the classifier), and it makes the model attend to the banned words ("don't
 elephant"). Always show the target language; never enumerate the words to avoid. This is the same
 "positive, never a blacklist" rule as the durable artifact, applied to the prompt.
 
-## Reading loaded content is itself delegated (all tiers)
+## Reading loaded content is itself delegated
 
 Step 4's rule — never pull the loaded corpus into the driving session — is not special to the
 rename sweep. It is the general posture for *reading* any content that plausibly carries
 off-register density: raw percept or episode dumps, feed captures, calibration sets, an unknown
-external corpus. Treat such content as untrusted-to-the-main-session by default, on every tier —
-Fable, Opus, and Sonnet all carry the classifier, and on Opus/Sonnet a trip rolls back
-invisibly, so the driver cannot tell it happened. Delegate the read to a sub-agent (Sonnet by
-default) that returns aggregates, verdicts, or paraphrase; the raw text never enters the
+external corpus. Treat such content as untrusted-to-the-main-session by default, whatever model
+is driving — assume the classifier rides along at every tier, and that a trip may degrade the
+response invisibly, so the driver cannot count on noticing it. Delegate the read to a sub-agent
+(a smaller model is fine) that returns aggregates, verdicts, or paraphrase; the raw text never enters the
 driver's context. Listing the known offenders per project is worth doing, but the posture is the
 default for anything new or unclassified. The cost asymmetry is the whole argument: a classifier
 hit inside a delegated agent costs that one agent a retry; the same hit inline costs the session.
 
 ## Generalizing across projects
 The method is domain-agnostic; only `REGISTER.md` is per-project. A data project's register is
-the vocabulary of data and flow; an infra project's is hosts and services; the CA project's is a
-reflecting mind. Reuse this skill and `register-scan` unchanged; write a fresh `REGISTER.md` each
+the vocabulary of data and flow; an infra project's is hosts and services; a cognitive-agent
+project's is a reflecting mind. Reuse this skill and `register-scan` unchanged; write a fresh `REGISTER.md` each
 time from the project's own domain. Keep no shared word-list — each project's positive register
 is its own, and a shared blacklist would be the very artifact this capability exists to avoid.
