@@ -127,18 +127,20 @@ trips the classifier), and it makes the model attend to the banned words ("don't
 elephant"). Always show the target language; never enumerate the words to avoid. This is the same
 "positive, never a blacklist" rule as the durable artifact, applied to the prompt.
 
-## Reading loaded content is itself delegated
+## The same reasoning applies to reading, not just renaming
 
-Step 4's rule — never pull the loaded corpus into the driving session — is not special to the
-rename sweep. It is the general posture for *reading* any content that plausibly carries
-off-register density: raw percept or episode dumps, feed captures, calibration sets, an unknown
-external corpus. Treat such content as untrusted-to-the-main-session by default, whatever model
-is driving — assume the classifier rides along at every tier, and that a trip may degrade the
-response invisibly, so the driver cannot count on noticing it. Delegate the read to a sub-agent
-(a smaller model is fine) that returns aggregates, verdicts, or paraphrase; the raw text never enters the
-driver's context. Listing the known offenders per project is worth doing, but the posture is the
-default for anything new or unclassified. The cost asymmetry is the whole argument: a classifier
-hit inside a delegated agent costs that one agent a retry; the same hit inline costs the session.
+Step 4 delegates the rename sweep because bulk handling of the loaded vocabulary is what re-trips
+the classifier. Reading that vocabulary does the same thing, so the same move applies whenever a
+session is about to take in content likely to carry off-register density — raw dumps, captures,
+calibration sets, an unknown external corpus. Have a sub-agent read it and return aggregates,
+verdicts, or paraphrase; keep the raw text out of the driving session.
+
+That is a working posture in its own right, with its own decisions to make (which model should
+carry the read, how to constrain what it returns, when a plain script beats a model entirely).
+This skill is about *naming*, so it does not carry that procedure — if your setup keeps one, that
+is where it belongs. What matters here is only the reason the two are connected: a register exists
+so ordinary work reads as what it is, and reading loaded material inline undoes that from the
+other end.
 
 ## Generalizing across projects
 The method is domain-agnostic; only `REGISTER.md` is per-project. A data project's register is
