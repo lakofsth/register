@@ -79,3 +79,7 @@ ln -s "$PWD/register-scan" ~/bin/register-scan  # the detector on PATH
 ```
 
 Then, in any project: write a `REGISTER.md` from `TEMPLATE.md`, and point your work at it.
+
+## License
+
+**AGPL-3.0-or-later** — see `LICENSE`. Copyright (C) 2026 Thomas Lakofski.

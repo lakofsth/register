@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-or-later
 """register-scan — surface where a codebase's vocabulary has drifted from its declared register.
 
 POSITIVE BY DESIGN. This tool carries no list of "loaded" or "bad" words — carrying one would be
@@ -148,6 +149,9 @@ def main() -> int:
             args.append(a)
         i += 1
     stdin_mode = "--stdin" in flags
+    if "--help" in flags or "-h" in args:
+        print(__doc__)
+        return 0
     if not args and not stdin_mode:
         print(__doc__)
         return 2
