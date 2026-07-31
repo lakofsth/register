@@ -42,7 +42,7 @@ mind for a part, that word is describing the mechanism's shape, not its purpose 
 past it for the word a person would use for the same move in the real domain.
 
 ### 2. Measure the drift (`register-scan`)
-`register-scan <path> [REGISTER.md]` tokenizes identifiers, strings, and comments, drops an
+`register-scan <path> [REGISTER.md]` tokenizes the text of source files, drops an
 English + programming stoplist and the register's own "words we reach for", and ranks what
 remains by frequency × file-spread — a heatmap of where the code's vocabulary has drifted from
 its own declared register. It names no "bad" words; it surfaces clusters for a human to judge
@@ -75,7 +75,7 @@ cumulative density, so every charged word kept out of caution or convenience spe
 pool that the one truly-irreducible term may need. Be greedy about transforming; hoard the kept
 exceptions for the words that truly cannot be transformed, and note each in `REGISTER.md`.
 
-Split the mapping by blast radius:
+Split the mapping by how far each change reaches:
 - **Comments & docstrings** — free to change; zero behavior risk. Do these always.
 - **Internal identifiers** (locals, private attrs, helper names) — mechanical rename; tests
   follow within the codebase.

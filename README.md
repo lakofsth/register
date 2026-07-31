@@ -33,9 +33,10 @@ Everything here follows from that.
   dual-purpose: a primer that makes a session write in-register from the start, and the allowlist
   the scanner reads.
 
-- **`register-scan`** — a dependency-free (stdlib) drift detector. It carries **no** word-list of
-  its own; it ranks the tokens in your code that are **far from your declared register**, so it
-  points at drift without ever naming a "bad" word. Two modes:
+- **`register-scan`** — a dependency-free (stdlib) drift detector. It carries **no** domain
+  word-list of its own (only a generic English + programming stoplist); it ranks the tokens in
+  your code that are **far from your declared register**, so it points at drift without ever
+  naming a "bad" word. Two modes:
 
   ```sh
   # whole-tree: where has a codebase drifted from its register?
@@ -46,7 +47,7 @@ Everything here follows from that.
   ```
 
 - **`SKILL.md`** — the method, as a Claude Code skill: establish the register, scan for drift,
-  map fixes by blast radius (comments are free; identifiers rename with their references; on-disk
+  map fixes by how far each change reaches (comments are free; identifiers rename with their references; on-disk
   and cross-module string values need a back-compat read shim), migrate the loaded material out of
   the working context (delegate it), verify, and bake the register in.
 
