@@ -46,6 +46,9 @@ Everything here follows from that.
   git diff --name-only HEAD~5 | register-scan --stdin REGISTER.md
   ```
 
+  `--top N` sets how many tokens the heatmap lists (default 40); `--min-files M` keeps only
+  tokens spread across at least M files (default 1). `register-scan --help` prints the usage.
+
 - **`SKILL.md`** — the method, as a Claude Code skill: establish the register, scan for drift,
   map fixes by how far each change reaches (comments are free; identifiers rename with their references; on-disk
   and cross-module string values need a back-compat read shim), migrate the loaded material out of

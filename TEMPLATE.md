@@ -31,5 +31,7 @@ Name it that. If a word from another world (contest, security, courtroom, warfar
 the first that comes to mind, it's usually describing the mechanism's shape, not its purpose
 here — reach past it for the word a person would use for the same move in the real domain.
 
-<Optional: note any deliberately-kept exceptions — a load-bearing term retained despite being
-off-register because the churn to remove it outweighs the signal it carries — and why.>
+<Optional: note any deliberately-kept exceptions — a term retained despite being off-register
+because its meaning genuinely cannot survive rewording, even with its defining properties stated
+plainly — and why. Keep this list short: churn or convenience is not a reason to keep one, since
+every charged word kept spends from the same density budget the truly irreducible term needs.>
